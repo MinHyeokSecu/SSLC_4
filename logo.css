@@ -1,0 +1,34 @@
+.cortis-logo-link {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.cortis-logo-image {
+    display: block;
+    width: 160px;
+    max-width: 100%;
+    height: auto;
+}
+
+.cortis-logo-link--card {
+    display: flex;
+    justify-content: center;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto 28px;
+}
+
+.cortis-logo-link--card .cortis-logo-image {
+    width: 300px;
+}
+
+@media (max-width: 480px) {
+    .cortis-logo-image {
+        width: 140px;
+    }
+
+    .cortis-logo-link--card .cortis-logo-image {
+        width: 240px;
+    }
+}

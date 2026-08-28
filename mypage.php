@@ -272,6 +272,7 @@ $user = $result->fetch_assoc();
         }
 
     </style>
+    <link rel="stylesheet" href="logo.css">
 
 </head>
 
@@ -285,9 +286,9 @@ $user = $result->fetch_assoc();
 
     <div class="header-inner">
 
-        <div class="logo">
-            Cortis
-        </div>
+        <a class="cortis-logo-link" href="index.php" aria-label="Cortis 홈">
+            <img class="cortis-logo-image" src="Cortis_로고.png" alt="Cortis">
+        </a>
 
         <div class="subtitle">
             Company Internal Management System

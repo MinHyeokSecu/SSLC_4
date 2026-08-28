@@ -214,9 +214,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         .btn-submit:hover { background: #1d4ed8; }
         .error { color: #ef4444; margin-bottom: 15px; font-size: 14px; }
     </style>
+    <link rel="stylesheet" href="logo.css">
 </head>
 <body>
     <div class="upload-card">
+        <a class="cortis-logo-link cortis-logo-link--card" href="index.php" aria-label="Cortis 홈">
+            <img class="cortis-logo-image" src="Cortis_로고.png" alt="Cortis">
+        </a>
         <h2>자료 등록</h2>
 
         <?php if ($error): ?>

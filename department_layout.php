@@ -29,11 +29,14 @@ function renderHeader(string $title, array $breadcrumbs = []): void
         .form-row{display:flex;gap:10px;margin-bottom:18px}.form-row input,.form-row select,.upload-box input{width:100%;padding:12px 14px;background:var(--white);border:1px solid #cbd5e1;border-radius:8px;font:inherit}.form-row button,.button{flex:0 0 auto;padding:12px 18px;background:var(--blue);color:var(--white);border:0;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none;cursor:pointer}.form-row button:hover,.button:hover{background:#1d4ed8}.button.secondary{background:var(--white);color:#334155;border:1px solid var(--line)}.empty-actions{display:flex;justify-content:center;gap:10px;margin-top:18px}.upload-box{display:grid;gap:12px;padding:22px;background:var(--soft);border:1px dashed #cbd5e1;border-radius:9px}.upload-box label{font-size:14px;font-weight:700}.helper-text{margin:0;color:var(--muted);font-size:13px;line-height:1.6}.detail-list{display:grid;grid-template-columns:160px 1fr;margin:0;border-top:1px solid var(--line)}.detail-list dt,.detail-list dd{margin:0;padding:15px;border-bottom:1px solid var(--line)}.detail-list dt{background:var(--soft);font-weight:700}.site-footer{padding:25px;background:var(--navy);color:#9ca3af;text-align:center;font-size:13px}
         @media(max-width:800px){.page-grid,.org-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){.container{max-width:calc(100% - 28px)}.site-nav .container{max-width:100%}.site-nav a{flex:1 0 33.333%;padding:13px 8px;text-align:center;font-size:13px}main{padding-top:24px}.page-hero,.panel,.organization{padding:22px}.page-grid,.org-grid{grid-template-columns:1fr}.page-actions,.form-row{flex-direction:column}.action-link.next{text-align:left}.detail-list{grid-template-columns:1fr}.detail-list dt{padding-bottom:6px;border-bottom:0}.detail-list dd{padding-top:6px}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.department-card{transition:none}}
     </style>
+    <link rel="stylesheet" href="logo.css">
 </head>
 <body>
 <header class="site-header">
     <div class="container">
-        <a class="brand" href="index.php">Cortis</a>
+        <a class="brand cortis-logo-link" href="index.php" aria-label="Cortis 홈">
+            <img class="cortis-logo-image" src="Cortis_로고.png" alt="Cortis">
+        </a>
         <div class="subtitle">Company Internal Management System</div>
     </div>
 </header>

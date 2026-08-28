@@ -114,12 +114,17 @@ button {
     text-decoration: none;
 }
 </style>
+<link rel="stylesheet" href="logo.css">
 
 </head>
 
 <body>
 
 <div class="signup-box">
+
+    <a class="cortis-logo-link cortis-logo-link--card" href="index.php" aria-label="Cortis 홈">
+        <img class="cortis-logo-image" src="Cortis_로고.png" alt="Cortis">
+    </a>
 
     <h2>임직원 회원가입</h2>
     <?php if (!empty($message)) : ?>

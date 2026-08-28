@@ -295,6 +295,7 @@ button:hover {
 }
 
 </style>
+<link rel="stylesheet" href="logo.css">
 
 </head>
 
@@ -307,11 +308,13 @@ button:hover {
     <!-- 회사 로고 -->
     <div class="logo-area">
 
-        <img
-            src="cortis1_logo.png"
-            alt="Cortis 로고"
-            class="login-logo"
-        >
+        <a class="cortis-logo-link" href="index.php" aria-label="Cortis 홈">
+            <img
+                src="Cortis_로고.png"
+                alt="Cortis"
+                class="login-logo"
+            >
+        </a>
 
     </div>
 

@@ -28,8 +28,7 @@ $keyword = trim((string) ($_GET['keyword'] ?? ''));
 
 /* 자료 목록 조회 */
 
-$sql = "SELECT a.attachment_id, a.related_type, a.related_id, a.title, a.uploader_id, a.original_name, a.stored_name, a.file_path, a.content_type, a.file_size, a.created_at, e.name AS uploader_name FROM attachments a LEFT JOIN employees e ON a.uploader_id = e.employee_id WHERE a.title LIKE '%$keyword%' OR a.original_name LIKE '%$keyword%' OR a.stored_name LIKE '%$keyword%' OR a.related_type LIKE '%$keyword%' OR e.name LIKE '%$keyword%' ORDER BY a.created_at DESC";
-
+$sql = "SELECT a.attachment_id, a.related_type, a.related_id, a.title, a.uploader_id, a.original_name, a.stored_name, a.file_path, a.content_type, a.file_size, a.created_at, e.name AS uploader_name FROM attachments a LEFT JOIN employees e ON a.uploader_id = e.employee_id WHERE a.related_type = 'RESOURCE' AND (a.title LIKE '%$keyword%' OR a.original_name LIKE '%$keyword%' OR a.stored_name LIKE '%$keyword%' OR e.name LIKE '%$keyword%') ORDER BY a.created_at DESC";
 $result = $conn->query($sql);
 
 if (!$result) {
@@ -344,6 +343,7 @@ if (!$result) {
         }
 
     </style>
+    <link rel="stylesheet" href="logo.css">
 
 </head>
 
@@ -357,9 +357,9 @@ if (!$result) {
 
     <div class="header-inner">
 
-        <div class="logo">
-            Cortis
-        </div>
+        <a class="cortis-logo-link" href="index.php" aria-label="Cortis 홈">
+            <img class="cortis-logo-image" src="Cortis_로고.png" alt="Cortis">
+        </a>
 
         <div class="subtitle">
             Company Internal Management System
