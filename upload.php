@@ -19,14 +19,8 @@ require_once "db.php";
 $logged_in_user_id = $_SESSION["employee_id"];
 
 
-/* 2. 관리자(인사팀) 여부 확인 */
-$user_sql = "
-    SELECT d.department_id
-    FROM employees e
-    LEFT JOIN department d
-        ON e.department_id = d.department_id
-    WHERE e.employee_id = ?
-";
+/* 2. 관리자 권한 여부 확인 */
+$user_sql = "SELECT role FROM employees WHERE employee_id = ?";
 
 $user_stmt = $conn->prepare($user_sql);
 $user_stmt->bind_param("i", $logged_in_user_id);
@@ -35,8 +29,8 @@ $user_stmt->execute();
 $user_result = $user_stmt->get_result()->fetch_assoc();
 
 
-/* 3. 인사팀이 아니면 업로드 페이지 접근 차단 (인사팀 부서 ID가 1이라고 가정) */
-if (!$user_result || (int)$user_result["department_id"] !== 1) {
+/* 3. 관리자가 아니면 업로드 페이지 접근 차단 */
+if (!$user_result || $user_result["role"] !== "ADMIN") {
 
     http_response_code(403);
 

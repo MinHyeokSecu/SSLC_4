@@ -230,4 +230,43 @@ renderHeader(
     </section>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const uploadPanel = document.querySelector('.content-stack > .panel:nth-child(2)');
+    if (!uploadPanel) {
+        return;
+    }
+
+    const statusBadge = uploadPanel.querySelector('.status-badge');
+    if (statusBadge) {
+        statusBadge.textContent = '등록 가능';
+    }
+
+    const titleLabel = uploadPanel.querySelector('label[for="resource-title"]');
+    if (titleLabel) {
+        titleLabel.textContent = '자료 제목';
+    }
+
+    const titleInput = uploadPanel.querySelector('#resource-title');
+    if (titleInput) {
+        titleInput.setAttribute('placeholder', '자료 제목 입력');
+    }
+
+    const fileLabel = uploadPanel.querySelector('label[for="resource-file"]');
+    if (fileLabel) {
+        fileLabel.textContent = '첨부파일';
+    }
+
+    const helperText = uploadPanel.querySelector('.upload-box .helper-text');
+    if (helperText) {
+        helperText.textContent = '업무에 필요한 자료 파일을 등록합니다.';
+    }
+
+    const submitButton = uploadPanel.querySelector('.upload-box button[type="submit"]');
+    if (submitButton) {
+        submitButton.textContent = '업로드';
+    }
+});
+</script>
+
 <?php renderFooter(); ?>
