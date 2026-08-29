@@ -2,14 +2,15 @@
 
 > OpenAI API 기반 AI Scanner를 활용한 가상 사내망 웹 서비스 취약점 진단 및 모의해킹 프로젝트
 
-<p align="left">
-  <img src="https://img.shields.io/badge/OS-Kali%20Linux-557C94?logo=kalilinux&logoColor=white" alt="Kali Linux" />
-  <img src="https://img.shields.io/badge/Server-Apache-D22128?logo=apache&logoColor=white" alt="Apache" />
-  <img src="https://img.shields.io/badge/Language-PHP-777BB4?logo=php&logoColor=white" alt="PHP" />
-  <img src="https://img.shields.io/badge/DB-MariaDB-003545?logo=mariadb&logoColor=white" alt="MariaDB" />
-  <img src="https://img.shields.io/badge/Tool-Burp%20Suite-FF6633?logo=burpsuite&logoColor=white" alt="Burp Suite" />
-  <img src="https://img.shields.io/badge/API-OpenAI-412991?logo=openai&logoColor=white" alt="OpenAI API" />
-  <img src="https://img.shields.io/badge/Focus-Web%20Security-brightgreen" alt="Web Security" />
+<p align='left'>
+  <img src='https://img.shields.io/badge/OS-Kali%20Linux-557C94?logo=kalilinux&logoColor=white' alt='Kali Linux' />
+  <img src='https://img.shields.io/badge/Server-Apache-D22128?logo=apache&logoColor=white' alt='Apache' />
+  <img src='https://img.shields.io/badge/Language-PHP-777BB4?logo=php&logoColor=white' alt='PHP' />
+  <img src='https://img.shields.io/badge/DB-MariaDB-003545?logo=mariadb&logoColor=white' alt='MariaDB' />
+  <img src='https://img.shields.io/badge/Tool-Nmap-4F6E93' alt='Nmap' />
+  <img src='https://img.shields.io/badge/Tool-Burp%20Suite-FF6633?logo=burpsuite&logoColor=white' alt='Burp Suite' />
+  <img src='https://img.shields.io/badge/API-OpenAI-412991?logo=openai&logoColor=white' alt='OpenAI API' />
+  <img src='https://img.shields.io/badge/Focus-Web%20Security-brightgreen' alt='Web Security' />
 </p>
 
 > [!CAUTION]
