@@ -1,92 +1,89 @@
-# AI Scanner dashboard
+# AI Scanner Dashboard
 
-생성형 AI 기반 웹 취약점 진단 결과를 보안담당자가 검토하고, 증적을 연결해 재분석 및 보고서 상태를 확인하기 위한 Streamlit 대시보드입니다. 현재 버전은 실제 서버나 AI 툴을 호출하지 않고 JSON 모의 데이터만 사용합니다.
+웹 취약점 진단의 `데이터 생성 → 수집 → 연결 → 분석 → 시각화` 흐름과 두 차례의 AI 판단을 보여주는 독립형 Streamlit 대시보드입니다.
 
-## 핵심 흐름
+1. `1차 자동 스캔 시작`: 취약점 후보, 초기 위험도, 신뢰도를 조회합니다.
+2. 담당자가 검토 메모와 캡처·HTTP 기록·로그·PDF 등의 증적을 등록합니다.
+3. `증적 반영 재분석 실행`: 검토와 증적을 스캐너 경계에 제출하고 최종 위험도를 조회합니다.
 
-화면 상단에서 다음 처리 상태가 한 방향으로 이어집니다.
+현재 기본값은 완전한 모의 동작입니다. 대상 서버 공격, 외부 API 호출, 모델 학습, 가짜 PDF 생성을 수행하지 않습니다. 첨부된 PDF 화면은 표시 항목을 설계하는 참고 자료로만 사용하며 데이터로 파싱하지 않습니다.
 
-`데이터 생성 → 수집 → 연결 → 분석 → 시각화`
+## 실행
 
-각 단계는 상태, 처리 건수, 마지막 처리 시각, 오류 여부를 표시합니다. 그 아래에는 핵심 지표, 취약점 유형·위험도·검증 상태 차트, 1차/최종 판정 비교, 필터 가능한 취약점 표와 상세 정보가 배치됩니다.
-
-## 폴더 구조
-
-```text
-ai_scanner_dashboard/
-├── app.py
-├── settings.py
-├── components/             # Streamlit 화면 구성 요소
-├── providers/              # 모의/실제 툴 데이터 공급 계약
-├── services/               # 정규화와 지표 계산
-├── models/                 # dataclass 데이터 모델
-├── data/
-│   └── mock_scan_result.json
-├── tests/
-├── .streamlit/
-│   └── config.toml
-├── .env.example
-├── requirements.txt
-└── README.md
-```
-
-## 설치 및 PowerShell 실행
+PowerShell에서 다음 명령을 실행합니다.
 
 ```powershell
 cd C:\redred\ai_scanner_dashboard
 python -m venv .venv
 .venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-streamlit run app.py
-```
-
-현재 PC에 의존성이 이미 설치되어 있다면 가상환경 생성 없이 아래 명령만 실행할 수 있습니다.
-
-```powershell
-cd C:\redred\ai_scanner_dashboard
+python -m pip install -r requirements.txt
 python -m streamlit run app.py
 ```
 
-## 모의 데이터
+종료는 실행 터미널에서 `Ctrl+C`입니다.
 
-`data/mock_scan_result.json`은 다음 내용을 포함합니다.
+## 동작 모드
 
-- 스캔 ID, 대상 시스템, 5단계 파이프라인 상태
-- SQL Injection, XSS, File Upload 각 3건
-- 미검증, 검증 완료, 오탐/제외, 재분석 필요 상태
-- HTTP 요약, 캡처, 로그, PDF 등 증적 메타데이터
-- 1차 보고서, 증적 재분석, 최종 보고서, 시큐어코딩 가이드 상태
+환경변수 `SCANNER_MODE`로 데이터 공급 방식을 바꿉니다. `.env.example`은 키 이름을 보여주는 예시일 뿐 자동 로딩되지 않으며, 실제 비밀값을 저장하면 안 됩니다.
 
-UI는 이 JSON 파일을 직접 읽지 않습니다. `MockDataProvider`가 읽은 원본을 `services/normalizer.py`에서 공통 `ScanResult`로 변환한 뒤 UI에 전달합니다.
+| 모드 | 화면 배지 | 현재 동작 |
+|---|---|---|
+| `mock` | `시연 모드 · Mock Data` | 번들 JSON으로 두 단계 흐름을 완전히 시연 |
+| `filesystem` | `결과 조회 모드 · Local Files` | 기존 `active-scan-*` 폴더를 읽기 전용으로 조회 |
+| `cli` | `연동 대기 · CLI` | 명령 규격이 없으므로 실행하지 않고 설정 안내 |
+| `rest` | `연동 대기 · REST` | API 규격이 없으므로 요청하지 않고 설정 안내 |
+| `tool` | `연동 대기 · AI Scanner` | 실제 툴 이식을 위한 명시적 TODO 경계 |
 
-## 실제 AI Scanner 연결
-
-실제 툴을 전달받으면 다음 두 곳만 중심으로 수정합니다.
-
-1. `providers/tool_provider.py`의 `fetch_raw_scan()`에서 이미 생성된 스캔 결과를 읽습니다.
-2. 툴 출력 필드명이 공통 스키마와 다르면 `services/normalizer.py`에 매핑 규칙을 추가합니다.
-
-`fetch_raw_scan()`의 입력은 선택적 `scan_id`, 출력은 JSON 호환 `Mapping`입니다. 이 메서드는 스캔을 시작하거나 공격을 수행하지 않고 기존 결과만 읽어야 합니다.
-
-환경변수로 Provider를 전환합니다.
+Filesystem 모드 예시:
 
 ```powershell
-$env:AI_SCANNER_PROVIDER = "tool"
-$env:AI_SCANNER_API_URL = "https://tool-api.example"
-# 또는
-$env:AI_SCANNER_RESULT_PATH = "C:\path\to\existing\result.json"
+$env:SCANNER_MODE = "filesystem"
+$env:SCANNER_RESULTS_DIR = "D:\REDRED\ai_scanner\results"
 python -m streamlit run app.py
 ```
 
-실제 출력 계약이 확정되기 전이므로 API 주소, 결과 경로, 모델명은 UI에 하드코딩하지 않았습니다. `.env.example`은 설정 항목 예시이며, 비밀값을 저장하지 않습니다.
+이 모드는 수정 시각 기준 최신 `active-scan-*` 폴더를 선택하고 `scan_result.json`, `result.json`, `review.json`, 그 밖의 JSON 순으로 결과를 찾습니다. `diagnostic_guide.pdf`, `final_report.pdf`, `secure_coding_guide.pdf`가 실제로 존재할 때만 다운로드 버튼이 활성화됩니다. 원본 결과나 `review.json`을 수정하지 않습니다.
 
-## 증적 업로드 안전 범위
+## 이식 호환 구조
 
-- 허용 형식: PNG/JPG, TXT, JSON, PDF
-- 기본 최대 크기: 파일당 10MB
-- 확장자, MIME, 크기와 JSON 문법을 검사
-- 업로드 바이트는 현재 Streamlit 세션 메모리에만 임시 보관
-- 파일 실행, 서버 전송, 기존 포털 저장소 기록을 수행하지 않음
+```text
+Streamlit UI
+  └─ ScannerService
+      └─ ScannerAdapter
+          ├─ MockScannerAdapter
+          ├─ FilesystemScannerAdapter
+          ├─ CliScannerAdapter
+          ├─ RestScannerAdapter
+          └─ ToolScannerAdapter
+      └─ scanner_result_normalizer
+          └─ ScanResult / Finding / Evidence / ReportArtifacts
+```
+
+UI는 오직 `ScannerService`와 표준 모델만 사용합니다. 실제 AI Scanner 코드를 받으면 주로 다음 두 파일만 수정합니다.
+
+- `adapters/tool_adapter.py`: 실제 함수·CLI·REST 호출과 검토/증적 전달
+- `normalizers/scanner_result_normalizer.py`: 실제 출력 필드명을 표준 모델로 매핑
+
+어댑터가 지켜야 할 메서드 계약은 다음과 같습니다.
+
+```python
+health_check()
+run_initial_scan(target_url)
+submit_review(scan_id, reviews, evidence)
+run_reanalysis(scan_id)
+get_scan_result(scan_id)
+get_report_artifacts(scan_id)
+```
+
+표준 모델은 누락 값을 허용하므로 일부 필드가 없거나 새로운 취약점 유형이 들어와도 화면 전체가 중단되지 않습니다. 실제 연결 절차는 [integration_checklist.md](integration_checklist.md)를 확인하세요.
+
+## 증적과 비밀정보 처리
+
+- 업로드 허용: PNG/JPG, TXT/LOG, JSON, PDF
+- 업로드 내용은 현재 Streamlit 세션 메모리에만 보관
+- 업로드 파일 실행, 취약 서버 전송, 결과 폴더 기록 없음
+- API 키는 UI·로그·오류 메시지에 표시하지 않음
+- 보고서 로컬 경로는 UI에 표시하지 않음
 
 ## 테스트
 
@@ -95,8 +92,8 @@ cd C:\redred\ai_scanner_dashboard
 python -m unittest discover -s tests -v
 ```
 
-테스트는 모의 데이터 스키마, 유형/상태 포함 여부, KPI·차트 합계, Streamlit 기본 렌더링을 확인합니다.
+테스트는 mock 2단계 흐름, filesystem 읽기, 실제 PDF 존재 여부, Windows/POSIX 경로, 누락·알 수 없는 필드, 잘못된 JSON, CLI/REST 미설정 시 무호출을 확인합니다.
 
-## 기존 서버와의 분리
+## 기존 서버와 분리
 
-대시보드는 `ai_scanner_dashboard` 폴더 안에서 독립 실행됩니다. 상위 디렉터리의 PHP, HTML, CSS, JavaScript, SQL, DB 설정을 import하거나 수정하지 않으며, 취약 웹 서버나 데이터베이스를 실행·중지·스캔하지 않습니다.
+모든 코드는 `ai_scanner_dashboard` 내부에 있습니다. 상위의 PHP·HTML·CSS·JavaScript·SQL·DB 설정을 import하거나 수정하지 않으며, 취약 서버를 실행·중지·스캔하지 않습니다.

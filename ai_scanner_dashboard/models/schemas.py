@@ -1,106 +1,88 @@
-"""Dataclass models shared by mock and future tool providers."""
+"""Stable dashboard models independent of a concrete scanner implementation."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Literal
-
-
-Severity = Literal["Critical", "High", "Medium", "Low"]
-VerificationStatus = Literal[
-    "unverified", "verified", "false_positive", "reanalysis_required"
-]
-FindingCategory = Literal["SQL Injection", "XSS", "File Upload"]
-ProcessStatus = Literal["pending", "running", "completed", "error"]
-
-
-@dataclass(frozen=True)
-class Target:
-    name: str
-    base_url: str
-
-
-@dataclass(frozen=True)
-class PipelineStep:
-    key: Literal["generate", "collect", "connect", "analyze", "visualize"]
-    label: str
-    status: ProcessStatus
-    count: int
-    last_processed_at: datetime | None = None
-    error: str | None = None
-
-
-@dataclass(frozen=True)
-class Pipeline:
-    status: ProcessStatus
-    generated_at: datetime | None = None
-    collected_at: datetime | None = None
-    normalized_at: datetime | None = None
-    analyzed_at: datetime | None = None
-    steps: list[PipelineStep] = field(default_factory=list)
-
-
-@dataclass(frozen=True)
-class ScanSummary:
-    scanned_pages: int
-    normal_pages: int = 0
-
-
-@dataclass(frozen=True)
-class Finding:
-    finding_id: str
-    category: FindingCategory
-    url: str
-    parameter: str
-    initial_severity: Severity
-    final_severity: Severity
-    verification_status: VerificationStatus
-    confidence: float
-    evidence_ids: list[str]
-    cwe: str | None
-    cve: str | None
-    cvss: float | None
-    summary: str
-    detection_basis: str
-    http_request_summary: str
-    http_response_summary: str
-    initial_assessment: str
-    analyst_verification: str
-    ai_reanalysis: str
-    impact: str
-    remediation: str
-    secure_coding: str
-    analyzed_at: datetime
+from typing import Any
 
 
 @dataclass(frozen=True)
 class Evidence:
-    evidence_id: str
-    type: Literal["screenshot", "log", "http_request", "http_response", "pdf"]
-    filename: str
-    mime_type: str
-    size_bytes: int
-    finding_ids: list[str]
-    uploaded_at: datetime
+    evidence_id: str = ""
+    finding_id: str | None = None
+    evidence_type: str = "unknown"
+    filename: str = "unnamed"
+    description: str | None = None
+    local_path: str | None = None
+    uploaded_at: datetime | None = None
+    mime_type: str | None = None
+    size_bytes: int | None = None
 
 
 @dataclass(frozen=True)
-class Report:
-    report_id: str
-    name: str
-    status: ProcessStatus
-    updated_at: datetime | None
-    summary: str
+class ReportArtifacts:
+    diagnostic_guide: str | None = None
+    final_report: str | None = None
+    secure_coding_guide: str | None = None
+
+    def get(self, report_type: str) -> str | None:
+        if report_type not in {
+            "diagnostic_guide",
+            "final_report",
+            "secure_coding_guide",
+        }:
+            return None
+        return getattr(self, report_type)
+
+
+@dataclass(frozen=True)
+class Finding:
+    finding_id: str = "unknown-finding"
+    vulnerability_type: str = "Unknown"
+    uri: str = "/"
+    http_method: str | None = None
+    parameter: str | None = None
+    parameter_location: str | None = None
+    initial_severity: str | None = None
+    final_severity: str | None = None
+    confidence: float | None = None
+    scanner_status: str = "unknown"
+    review_status: str = "unverified"
+    priority: str | None = None
+    request_summary: str | None = None
+    response_summary: str | None = None
+    baseline_comparison: dict[str, Any] | None = None
+    scanner_judgment: str | None = None
+    reviewer_memo: str | None = None
+    final_judgment: str | None = None
+    cwe: str | None = None
+    owasp_category: str | None = None
+    cvss: float | None = None
+    evidence: list[Evidence] = field(default_factory=list)
+    summary: str | None = None
+    impact: str | None = None
+    remediation: str | None = None
+    secure_coding: str | None = None
+    analyzed_at: datetime | None = None
 
 
 @dataclass(frozen=True)
 class ScanResult:
-    scan_id: str
-    target: Target
-    pipeline: Pipeline
-    scan_summary: ScanSummary
-    findings: list[Finding]
-    evidence: list[Evidence]
-    reports: list[Report]
-    schema_version: str = "1.0"
+    scan_id: str = "unknown-scan"
+    target_url: str = ""
+    status: str = "unknown"
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    findings: list[Finding] = field(default_factory=list)
+    reports: ReportArtifacts = field(default_factory=ReportArtifacts)
+    raw_result_path: str | None = None
+    scanned_pages: int = 0
+    normal_pages: int = 0
+
+
+@dataclass(frozen=True)
+class ReportDownload:
+    filename: str
+    content: bytes
+    mime_type: str = "application/pdf"

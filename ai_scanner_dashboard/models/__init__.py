@@ -1,23 +1,11 @@
-"""Typed domain models for AI Scanner dashboard data."""
+"""Public dashboard data models."""
 
-from .schemas import (
-    Evidence,
-    Finding,
-    Pipeline,
-    PipelineStep,
-    Report,
-    ScanResult,
-    ScanSummary,
-    Target,
-)
+from .schemas import Evidence, Finding, ReportArtifacts, ReportDownload, ScanResult
 
 __all__ = [
     "Evidence",
     "Finding",
-    "Pipeline",
-    "PipelineStep",
-    "Report",
+    "ReportArtifacts",
+    "ReportDownload",
     "ScanResult",
-    "ScanSummary",
-    "Target",
 ]

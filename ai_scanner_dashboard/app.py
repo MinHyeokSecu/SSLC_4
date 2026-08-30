@@ -1,109 +1,150 @@
-"""AI Scanner security assessment dashboard."""
+"""Two-stage AI Scanner dashboard with swappable integration adapters."""
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import streamlit as st
 
-from components.evidence import render_evidence_upload
+from adapters import ScannerAdapterError
+from components.evidence import evidence_payload, render_evidence_review, review_payload
 from components.findings import render_finding_detail, render_findings_table
 from components.overview import render_charts, render_kpis, render_pipeline
 from components.reports import render_reports
-from providers import ProviderError, create_provider
+from services import create_scanner_service
 from services.metrics import compute_dashboard_metrics
-from settings import Settings, load_settings
+from settings import ScannerSettings
 
 
 st.set_page_config(
-    page_title="AI Scanner dashboard",
+    page_title="AI Scanner Dashboard",
     page_icon=":material/security:",
     layout="wide",
 )
 
 
-@st.cache_data(ttl="5m", max_entries=4, show_spinner="진단 데이터를 불러오는 중입니다...")
-def load_scan_data(
-    provider_name: str,
-    mock_data_path: str,
-    api_url: str | None,
-    result_path: str | None,
-    model_name: str | None,
-    max_upload_mb: int,
-):
-    """Load normalized source data while keeping cheap UI filters uncached."""
-    runtime_settings = Settings(
-        provider=provider_name,
-        mock_data_path=Path(mock_data_path),
-        tool_api_url=api_url,
-        tool_result_path=Path(result_path) if result_path else None,
-        tool_model_name=model_name,
-        max_upload_mb=max_upload_mb,
-    )
-    return create_provider(runtime_settings).get_scan_result()
-
-
-def clear_dashboard_cache() -> None:
-    load_scan_data.clear()
-
-
-st.session_state.setdefault("session_evidence", [])
-
-try:
-    settings = load_settings()
-    provider = create_provider(settings)
-    scan = load_scan_data(
-        settings.provider,
+def initialize_state(settings: ScannerSettings) -> None:
+    signature = (
+        settings.mode,
         str(settings.mock_data_path),
-        settings.tool_api_url,
-        str(settings.tool_result_path) if settings.tool_result_path else None,
-        settings.tool_model_name,
-        settings.max_upload_mb,
+        str(settings.results_dir),
+        settings.cli_command,
+        settings.api_base_url,
     )
-except (ProviderError, ValueError) as exc:
-    st.error(f"대시보드 데이터를 불러오지 못했습니다. {exc}", icon=":material/error:")
-    st.caption("설정과 JSON 스키마를 확인한 뒤 새로고침해 주세요.")
-    st.stop()
+    if st.session_state.get("service_signature") != signature:
+        st.session_state.scanner_service = create_scanner_service(settings)
+        st.session_state.service_signature = signature
+        st.session_state.workflow_phase = "ready"
+        st.session_state.scan_result = None
+        st.session_state.session_reviews = {}
+        st.session_state.session_evidence = []
+        st.session_state.dashboard_error = None
+    st.session_state.setdefault("workflow_phase", "ready")
+    st.session_state.setdefault("scan_result", None)
+    st.session_state.setdefault("session_reviews", {})
+    st.session_state.setdefault("session_evidence", [])
+    st.session_state.setdefault("dashboard_error", None)
+
+
+settings = ScannerSettings.from_env()
+initialize_state(settings)
+service = st.session_state.scanner_service
 
 st.logo(":material/security:", size="large")
 with st.sidebar:
     st.markdown("### AI Scanner")
-    st.badge(provider.source_label, color="gray", icon=":material/database:")
-    st.caption(f"스캔 ID · {scan.scan_id}")
-    st.caption(f"대상 · {scan.target.name}")
-    st.button(
-        "데이터 새로고침",
-        icon=":material/refresh:",
-        on_click=clear_dashboard_cache,
+    st.badge(service.source_label, color="gray", icon=":material/database:")
+    healthy, health_message = service.health_check()
+    if healthy:
+        st.success(health_message, icon=":material/check_circle:")
+    else:
+        st.warning(health_message, icon=":material/info:")
+    st.caption("대시보드는 대상 서버나 외부 API를 임의로 호출하지 않습니다.")
+    if st.button("세션 초기화", icon=":material/restart_alt:", width="stretch"):
+        for key in ["workflow_phase", "scan_result", "session_reviews", "session_evidence", "dashboard_error"]:
+            st.session_state.pop(key, None)
+        st.rerun()
+
+header, source = st.columns([4, 2], vertical_alignment="center")
+header.title("AI Scanner 보안 진단", anchor=False)
+with source:
+    st.badge(service.source_label, color="gray", icon=":material/science:")
+st.caption("1차 자동 스캔으로 후보를 만들고, 담당자 증적을 연결해 최종 위험도를 재판정합니다.")
+
+target_url = st.text_input(
+    "진단 대상 URL",
+    value=settings.default_target_url,
+    placeholder="http://example.local/login.php",
+    disabled=st.session_state.workflow_phase == "reanalysis_completed",
+)
+
+has_review = bool(st.session_state.session_reviews)
+has_evidence = bool(st.session_state.session_evidence)
+can_reanalyze = st.session_state.scan_result is not None and has_review and has_evidence
+first, second = st.columns(2)
+with first:
+    initial_clicked = st.button(
+        "1차 자동 스캔 시작",
+        type="primary",
+        icon=":material/radar:",
         width="stretch",
     )
-    st.caption("실제 스캔·공격·API 호출 없음")
+    if settings.mode == "filesystem":
+        st.caption("로컬 조회 모드에서는 최신 active-scan-* 결과를 읽습니다.")
+with second:
+    reanalysis_clicked = st.button(
+        "증적 반영 재분석 실행",
+        icon=":material/replay:",
+        width="stretch",
+        disabled=not can_reanalyze,
+    )
+    if not can_reanalyze:
+        st.caption("1차 결과, 담당자 검토 메모, 증적 파일이 모두 필요합니다.")
 
-with st.container(
-    horizontal=True,
-    horizontal_alignment="distribute",
-    vertical_alignment="center",
-):
-    st.title("AI Scanner 보안 진단", anchor=False)
-    st.badge(provider.source_label, color="gray", icon=":material/science:")
-st.caption(f"{scan.target.name} · {scan.target.base_url}")
+if initial_clicked:
+    try:
+        with st.spinner("1차 결과를 준비하고 있습니다..."):
+            st.session_state.scan_result = service.run_initial_scan(target_url)
+        st.session_state.workflow_phase = "initial_completed"
+        st.session_state.session_reviews = {}
+        st.session_state.session_evidence = []
+        st.session_state.dashboard_error = None
+        st.rerun()
+    except (ScannerAdapterError, ValueError) as exc:
+        st.session_state.dashboard_error = str(exc)
 
-render_pipeline(scan)
+if reanalysis_clicked:
+    try:
+        scan_id = st.session_state.scan_result.scan_id
+        with st.spinner("검토 의견과 증적을 반영하고 있습니다..."):
+            service.submit_review(scan_id, review_payload(), evidence_payload())
+            st.session_state.scan_result = service.run_reanalysis(scan_id)
+        st.session_state.workflow_phase = "reanalysis_completed"
+        st.session_state.dashboard_error = None
+        st.rerun()
+    except (ScannerAdapterError, ValueError) as exc:
+        st.session_state.dashboard_error = str(exc)
+
+if st.session_state.dashboard_error:
+    st.error(st.session_state.dashboard_error, icon=":material/error:")
+
+render_pipeline(st.session_state.workflow_phase)
+scan = st.session_state.scan_result
+if scan is None:
+    st.info("진단 대상 URL을 확인한 뒤 1차 자동 스캔을 시작하세요.", icon=":material/touch_app:")
+    st.stop()
+
 metrics = compute_dashboard_metrics(scan, len(st.session_state.session_evidence))
-render_kpis(metrics)
-render_charts(scan)
+render_kpis(metrics, st.session_state.workflow_phase)
+render_charts(scan, st.session_state.workflow_phase)
 
-selected_finding = render_findings_table(scan.findings)
-if selected_finding:
-    render_finding_detail(selected_finding, scan.evidence)
+selected = render_findings_table(scan.findings)
+if selected:
+    render_finding_detail(selected)
 
-st.subheader("증적 및 보고서", anchor=False)
-bottom = st.columns([1.2, 0.8], vertical_alignment="top")
-with bottom[0]:
-    render_evidence_upload(scan.findings, settings.max_upload_mb)
-with bottom[1]:
-    render_reports(scan.reports)
+st.subheader("검토와 산출물", anchor=False)
+review_column, report_column = st.columns([1.15, 0.85], vertical_alignment="top")
+with review_column:
+    render_evidence_review(scan.findings, settings.max_upload_mb)
+with report_column:
+    render_reports(service, scan)
 
-st.caption(
-    "모의 데이터 기반 화면 · 업로드 파일은 현재 세션 메모리에만 보관 · 실제 AI 연동 전"
-)
+st.caption("PDF 화면은 설계 참고 자료로만 사용했으며, 대시보드 데이터로 파싱하지 않습니다.")
