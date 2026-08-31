@@ -1,0 +1,20 @@
+# Runtime uploads may contain untrusted or executable files.
+/uploads/
+
+# Local database credentials and environment variables.
+/db.php
+.env
+.env.*
+!.env.example
+
+# Runtime logs.
+*.log
+
+# Installed PHP dependencies.
+/vendor/
+
+# Editor and operating-system metadata.
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
